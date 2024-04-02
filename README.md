@@ -2,24 +2,6 @@
 
 `libprompt` is a library to interpret CLI prompts. It can identify commands, options and option values.
 
-## Summary
-```c
-#include <prompt.h>
-
-int main(int argc, char *argv[]) {
-    // argc => 3
-    // argv => ["cli", "cmd", "--option=value"]
-    struct Prompt p = parse_prompt(argc, argv);
-
-    printf("%s\n", p.cmd); // => cmd
-
-    printf("%s\n", p.opts[0].key); // => --option
-    printf("%s\n", p.opts[0].value); // => value
-
-    return EXIT_SUCCESS;
-}
-```
-
 ## Installation
 
 ### Dependencies
@@ -40,7 +22,7 @@ $ make uninstall
 
 ## Usage
 
-TODO
+Take a look at [gh](https://github.com/gustavothecoder/gh) source code, it uses `libprompt` and is very simple to understand.
 
 ## Contributing
 
