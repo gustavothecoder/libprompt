@@ -2,6 +2,7 @@
 
 static int is_an_option(char *cmd_string);
 static struct Option parse_opt(char *opt_string);
+static void handle_raw_arg(struct Prompt *p, char *arg);
 static void remove_break_line(char *str);
 
 int compare_command(char *received, char *expected) {
@@ -13,15 +14,19 @@ struct Prompt parse_prompt(int argc, char *argv[], int (*cmd_table)(char *), int
     p.cmd = default_cmd;
     p.opts_sz = 0;
 
-    // We start with 1 because argv[0] will always be the executed binary.
-    for (int i = 1, cmd_i = 0; i < argc; i++) {
+    int identified_cmd;
+    for (int i = 1, cmd_i = 0; i < argc; i++) { // We start with 1 because argv[0] will always be the executed binary.
+        identified_cmd = cmd_table(argv[1]);
+
         if (is_an_option(argv[i])) {
             p.opts[cmd_i] = parse_opt(argv[i]);
             p.opts_sz++;
             cmd_i++;
-        } else if (i == 1) {
-            p.cmd = cmd_table(argv[1]);
-        } else if (p.opts[cmd_i - 1].has_value) {
+        } else if(identified_cmd == RAW_ARG) {
+            handle_raw_arg(&p, argv[i]);
+        } else if (i == 1)  {
+            p.cmd = identified_cmd;
+        } else if (p.opts[cmd_i - 1].has_value) { // This can conflict with RAW_ARG :(
             strcat(p.opts[cmd_i - 1].value, " ");
             strcat(p.opts[cmd_i - 1].value, argv[i]);
             remove_break_line(p.opts[cmd_i - 1].value);
@@ -58,6 +63,16 @@ static struct Option parse_opt(char *opt_string) {
     strcpy(o.key, received_opt);
 
     return o;
+}
+
+static void handle_raw_arg(struct Prompt *p, char *arg) {
+    if (p->has_raw_arg == 1) {
+        strcat(p->raw_arg, " ");
+        strcat(p->raw_arg, arg);
+    } else {
+        p->has_raw_arg = 1;
+        strcpy(p->raw_arg, arg);
+    }
 }
 
 static void remove_break_line(char *str) {

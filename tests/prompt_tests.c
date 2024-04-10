@@ -4,6 +4,8 @@
 int cmd_table(char *str_cmd) {
     if (compare_command(str_cmd, "pulls"))
         return 1;
+    else if (strstr(str_cmd, ".c"))
+        return RAW_ARG;
     else
         return INVALID_CMD;
 }
@@ -73,6 +75,37 @@ static void test_parsing_prompt_with_no_command_but_with_default_and_options(voi
     assert_string_equal(r.opts[1].key, "--option");
     assert_int_equal(r.opts[1].has_value, 1);
     assert_string_equal(r.opts[1].value, "value");
+}
+
+static void test_parsing_prompt_with_no_command_and_argument(void **state) {
+    int argc = 2;
+    char *fake_argv[argc];
+    fake_argv[0] = "trash";
+    fake_argv[1] = "./this/is/a/file.c\n";
+    int default_cmd = 1;
+
+    struct Prompt r = parse_prompt(argc, fake_argv, cmd_table, default_cmd);
+
+    assert_int_equal(r.cmd, default_cmd);
+
+    assert_true(r.has_raw_arg);
+    assert_string_equal(r.raw_arg, "./this/is/a/file.c\n");
+}
+
+static void test_parsing_prompt_with_no_command_and_multiple_arguments(void **state) {
+    int argc = 3;
+    char *fake_argv[argc];
+    fake_argv[0] = "trash";
+    fake_argv[1] = "./this/is/a/file.c";
+    fake_argv[2] = "./this/is/a/file/too.c\n";
+    int default_cmd = 1;
+
+    struct Prompt r = parse_prompt(argc, fake_argv, cmd_table, default_cmd);
+
+    assert_int_equal(r.cmd, default_cmd);
+
+    assert_true(r.has_raw_arg);
+    assert_string_equal(r.raw_arg, "./this/is/a/file.c ./this/is/a/file/too.c\n");
 }
 
 static void test_parsing_prompt_with_not_recognized_command(void **state) {
@@ -169,6 +202,8 @@ int main(void) {
         cmocka_unit_test(test_parsing_prompt_with_no_command),
         cmocka_unit_test(test_parsing_prompt_with_no_command_but_with_default),
         cmocka_unit_test(test_parsing_prompt_with_no_command_but_with_default_and_options),
+        cmocka_unit_test(test_parsing_prompt_with_no_command_and_argument),
+        cmocka_unit_test(test_parsing_prompt_with_no_command_and_multiple_arguments),
         cmocka_unit_test(test_parsing_prompt_with_not_recognized_command),
         cmocka_unit_test(test_parsing_prompt_with_flag),
         cmocka_unit_test(test_parsing_prompt_with_option),
